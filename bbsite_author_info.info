@@ -1,0 +1,5 @@
+name = BBSite author info
+description = bbsite author info
+core = 7.x
+package = BBSite
+version = '7.x-1.0'

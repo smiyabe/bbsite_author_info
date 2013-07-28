@@ -1,0 +1,308 @@
+<?php
+
+function bbsite_author_info_username_alter(&$name, $account) {
+  if (property_exists($account, 'full_name')) {
+    $name = $account->full_name;
+    return;
+  }
+  $name = $account->name;
+}
+
+function bbsite_author_info_preprocess_username(&$variables) {
+  if (isset($variables['account']) == false || $variables['uid'] == 0) {
+    return;
+  }
+
+  $account = user_load($variables['account']->uid);
+  if (property_exists($account, 'full_name')) {
+    $variables['name'] = $account->full_name;
+  }
+}
+
+function bbsite_author_info_field_extra_fields() {
+  foreach (node_type_get_names() as $type => $name) {
+    $extra['node'][$type] = array(
+      'display' => array(
+        'author_info' => array(
+          'label' => '著者情報',
+          'description' => 'この投稿の著者情報を表示します',
+          'weight' => 200,
+        ),
+      ),
+    );
+  }
+
+  $extra['user']['user'] = array(
+    'form' => array(
+      'full_name' => array(
+        'label' => 'ユーザの氏名',
+        'description' => 'ユーザの氏名',
+        'weight' => -9,
+      ),
+      'description' => array(
+        'label' => 'ユーザの説明',
+        'description' => 'ユーザの説明',
+        'weight' => -8,
+      ),
+      'twitter_id' => array(
+        'label' => 'Twitter アカウント',
+        'description' => 'Twitter アカウント',
+        'weight' => -7,
+      ),
+      'gplus_id' => array(
+        'label' => 'Google アカウント',
+        'description' => 'Google アカウント',
+        'weight' => -6,
+      ),
+      'facebook_id' => array(
+        'label' => 'Facebook アカウント',
+        'description' => 'Facebook アカウント',
+        'weight' => -5,
+      ),
+      'app_net_id' => array(
+        'label' => 'App.net アカウント',
+        'description' => 'App.net アカウント',
+        'weight' => -4,
+      ),
+    ),
+    'display' => array(
+      'full_name' => array(
+        'label' => 'ユーザの氏名',
+        'description' => 'ユーザの氏名',
+        'weight' => -9,
+      ),
+      'description' => array(
+        'label' => 'ユーザの説明',
+        'description' => 'ユーザの説明',
+        'weight' => -8,
+      ),
+      'twitter_id' => array(
+        'label' => 'Twitter アカウント',
+        'description' => 'Twitter アカウント',
+        'weight' => -7,
+      ),
+      'gplus_id' => array(
+        'label' => 'Google アカウント',
+        'description' => 'Google アカウント',
+        'weight' => -6,
+      ),
+      'facebook_id' => array(
+        'label' => 'Facebook アカウント',
+        'description' => 'Facebook アカウント',
+        'weight' => -5,
+      ),
+      'app_net_id' => array(
+        'label' => 'App.net アカウント',
+        'description' => 'App.net アカウント',
+        'weight' => -4,
+      ),
+    ),
+  );
+
+  return $extra;
+}
+
+/**
+ * Implements hook_theme().
+ */
+function bbsite_author_info_theme() {
+  return array(
+    'bbsite_author_info' => array(
+      'render element' => 'element',
+      'template' => 'bbsite-author-info',
+      'variables' => array('account' => NULL, 'full_name' => NULL, 'description' => NULL, 'gplus_id' => NULL, 'twitter_id' => NULL, 'facebook_id' => NULL, 'app_net_id' => NULL),
+    ),
+  );
+}
+
+function bbsite_author_info_entity_load($entities, $entity_type) {
+  if ($entity_type != 'user') {
+    return;
+  }
+
+  $result = db_query('SELECT * FROM {bbsite_author_info} WHERE uid IN (:uids)', array(':uids' => array_keys($entities)));
+  foreach ($result as $record) {
+    $entities[$record->uid]->full_name = $record->full_name;
+    $entities[$record->uid]->description = $record->description;
+    $entities[$record->uid]->description_format = $record->description_format;
+    $entities[$record->uid]->twitter_id = $record->twitter_id;
+    $entities[$record->uid]->gplus_id = $record->gplus_id;
+    $entities[$record->uid]->facebook_id = $record->facebook_id;
+    $entities[$record->uid]->app_net_id = $record->app_net_id;
+  }
+}
+
+function bbsite_author_info_field_attach_form($entity_type, $entity, &$form, &$form_state, $langcode) {
+  if ($entity_type == 'user') {
+    $form['full_name'] = array(
+      '#type' => 'textfield',
+      '#title' => '氏名',
+      '#size' => 40,
+      '#default_value' => $entity->full_name,
+    );
+    $form['description'] = array(
+      '#type' => 'text_format',
+      '#base_type' => 'textarea',
+      '#title' => '説明',
+      '#rows' => 5,
+      '#default_value' => $entity->description,
+      '#format' => $entity->description_format,
+    );
+    $form['twitter_id'] = array(
+      '#type' => 'textfield',
+      '#title' => 'ツイッターアカウント',
+      '#field_prefix' => 'https://twitter.com/',
+      '#size' => 40,
+      '#default_value' => $entity->twitter_id,
+    );
+    $form['gplus_id'] = array(
+      '#type' => 'textfield',
+      '#title' => 'Google+ アカウント',
+      '#field_prefix' => 'https://plus.google.com/',
+      '#size' => 40,
+      '#default_value' => $entity->gplus_id,
+    );
+    $form['facebook_id'] = array(
+      '#type' => 'textfield',
+      '#title' => 'Facebook アカウント',
+      '#field_prefix' => 'https://facebook.com/',
+      '#size' => 40,
+      '#default_value' => $entity->facebook_id,
+    );
+    $form['app_net_id'] = array(
+      '#type' => 'textfield',
+      '#title' => 'App.net アカウント',
+      '#field_prefix' => 'https://alpha.app.net/',
+      '#size' => 40,
+      '#default_value' => $entity->app_net_id,
+    );
+  }
+}
+
+function bbsite_author_info_entity_presave($entity, $entity_type) {
+  if ($entity_type != 'user') {
+    return;
+  }
+
+  $description = $entity->description;
+  $entity->description = $description['value'];
+  $entity->description_format = $description['format'];
+}
+
+
+function bbsite_author_info_entity_insert($entity, $entity_type) {
+  if ($entity_type != 'user') {
+    return;
+  }
+
+  db_insert('bbsite_author_info')
+    ->fields(array(
+        'full_name' => $entity->full_name,
+        'description' => $entity->description,
+        'description_format' => $entity->description_format,
+        'twitter_id' => $entity->twitter_id,
+        'gplus_id' => $entity->gplus_id,
+        'facebook_id' => $entity->facebook_id,
+        'app_net_id' => $entity->app_net_id,
+        'uid' => $entity->uid
+      ))
+    ->execute();
+}
+
+function bbsite_author_info_entity_update($entity, $entity_type) {
+  if ($entity_type != 'user') {
+    return;
+  }
+
+  db_merge('bbsite_author_info')
+    ->key(array('uid' => $entity->uid))
+    ->fields(array(
+        'full_name' => $entity->full_name,
+        'description' => $entity->description,
+        'description_format' => $entity->description_format,
+        'twitter_id' => $entity->twitter_id,
+        'gplus_id' => $entity->gplus_id,
+        'facebook_id' => $entity->facebook_id,
+        'app_net_id' => $entity->app_net_id
+      ))
+    ->execute();
+}
+
+function bbsite_author_info_user_delete($account) {
+  db_delete('bbsite_author_info')
+    ->condition('uid', $account->uid)
+    ->execute();
+}
+
+function bbsite_author_info_user_view($account, $view_mode, $langcode) {
+  $account->content['full_name'] = array(
+    '#type' => 'user_profile_item',
+    '#title' => '氏名',
+    '#markup' => '<span class="full_name">' .$account->full_name . '</span>',
+    '#attributes' => array('class' => array('profile_item full_name')),
+  );
+
+  if (!empty($account->twitter_id)) {
+    $url = 'https://twitter.com/' . $account->twitter_id;
+    $account->content['twitter_id'] = array(
+      '#type' => 'user_profile_item',
+      '#title' => 'ツイッターアカウント',
+      '#markup' => '<span class="twitter_id"><a itemprop="url" href="' . $url . '">@' . $account->twitter_id . '</a></span>',
+      '#attributes' => array('class' => array('profile_item twitter_id')),
+    );
+  }
+
+  if (!empty($account->gplus_id)) {
+    $url = 'https://plus.google.com/' . $account->gplus_id;
+    $account->content['gplus_id'] = array(
+      '#type' => 'user_profile_item',
+      '#title' => 'Google+ アカウント',
+      '#markup' => '<span class="google-plus-account">' . l($url, $url, array('attributes' => array('itemprop' => 'url'))) . '</span>',
+      '#attributes' => array('class' => array('profile_item gplus_id')),
+    );
+  }
+
+  if (!empty($account->facebook_id)) {
+    $url = 'https://facebook.com/' . $account->facebook_id;
+    $account->content['facebook_id'] = array(
+      '#type' => 'user_profile_item',
+      '#title' => 'Facebook アカウント',
+      '#markup' => '<span class="facebook-account">' . l($url, $url, array('attributes' => array('itemprop' => 'url'))) . '</span>',
+      '#attributes' => array('class' => array('profile_item facebook_id')),
+    );
+  }
+
+  if (!empty($account->app_net_id)) {
+    $url = 'https://alpha.app.net/' . $account->app_net_id;
+    $account->content['app_net_id'] = array(
+      '#type' => 'user_profile_item',
+      '#title' => 'App.net アカウント',
+      '#markup' => '<span class="app-net-account">' . l($url, $url, array('attributes' => array('itemprop' => 'url'))) . '</span>',
+      '#attributes' => array('class' => array('profile_item app_net_id')),
+    );
+  }
+
+  if (!empty($account->description)) {
+    $account->content['description'] = array(
+      '#type' => 'user_profile_item',
+      '#title' => '自己紹介',
+      '#markup' => '<div itemprop="description" class="description">' . check_markup($account->description, $account->description_format, true) . '</div>',
+      '#attributes' => array('class' => array('profile_item description')),
+    );
+  }
+}
+
+function bbsite_author_info_node_view($node, $view_mode, $langcode) {
+  $author = user_load($node->uid);
+
+  $node->content['author_info'] = array(
+    '#theme' => 'bbsite_author_info',
+    '#account' => $author,
+    '#full_name' => $author->full_name,
+    '#description' => check_markup($author->description, $author->description_format, true),
+    '#gplus_id' => $author->gplus_id,
+    '#twitter_id' => $author->twitter_id,
+    '#facebook_id' => $author->facebook_id,
+    '#app_net_id' => $author->app_net_id
+  );
+}

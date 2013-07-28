@@ -1,0 +1,70 @@
+<?php
+
+/**
+ * @file
+ * Install, update and uninstall functions for the bbsite author info module.
+ */
+
+/**
+ * Implements hook_schema().
+ */
+function bbsite_author_info_schema() {
+  $schema['bbsite_author_info'] = array(
+    'fields' => array(
+      'uid' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'full_name' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'default' => NULL,
+      ),
+      'description' => array(
+        'type' => 'text',
+        'size' => 'big',
+        'default' => NULL,
+      ),
+      'description_format' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'default' => NULL,
+      ),
+      'twitter_id' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'default' => NULL,
+      ),
+      'gplus_id' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'default' => NULL,
+      ),
+      'facebook_id' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'default' => NULL,
+      ),
+      'app_net_id' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'default' => NULL,
+      ),
+    ),
+    'primary key' => array('uid'),
+    'foreign keys' => array(
+      'author_info_user' => array(
+        'table' => 'users',
+        'columns' => array('uid' => 'uid'),
+      ),
+      'author_info_format' => array(
+        'table' => 'filter_format',
+        'columns' => array('description_format' => 'format'),
+      ),
+    ),
+  );
+
+  return $schema;
+}
