@@ -306,3 +306,56 @@ function bbsite_author_info_node_view($node, $view_mode, $langcode) {
     '#app_net_id' => $author->app_net_id
   );
 }
+
+/**
+ * Implements hook_search_info().
+ */
+function bbsite_author_info_search_info() {
+  return array(
+    'title' => 'Users',
+    'path' => 'bbsite_author_info'
+  );
+}
+
+/**
+ * Implements hook_search_access().
+ */
+function bbsite_author_info_access() {
+  return user_access('access user profiles');
+}
+
+/**
+ * Implements hook_search_execute().
+ */
+function bbsite_author_info_search_execute($keys = NULL, $conditions = NULL) {
+  $keys = preg_replace('!\*+!', '%', $keys);
+
+  $query = db_select('users', 'u');
+  $query->leftjoin('bbsite_author_info', 'i', 'i.uid = u.uid');
+  $query = $query->extend('PagerDefault')->fields('u', array('uid'));
+
+  foreach (explode(" ", $keys) as $key) {
+    $query = $query->condition(
+      db_or()
+      ->condition('name', '%' . db_like($key) . '%', 'LIKE')
+      ->condition('full_name', '%' . db_like($key) . '%', 'LIKE')
+      ->condition('description', '%' . db_like($key) . '%', 'LIKE')
+    );
+  }
+
+  $uids = $query->limit(15)->execute()->fetchCol();
+  $accounts = user_load_multiple($uids);
+
+  $results = array();
+  foreach ($accounts as $account) {
+    $rendered = theme('user_picture', array('account' => $account)) . check_markup($account->description, $account->description_format, true);
+    $result = array(
+      'title' => format_username($account),
+      'link' => url('user/' . $account->uid, array('absolute' => TRUE)),
+      'snippet' => $rendered
+    );
+    $results[] = $result;
+  }
+
+  return $results;
+}
